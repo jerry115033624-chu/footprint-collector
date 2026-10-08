@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>蒐集腳印 👣 環遊世界時間軸產生器</title>
+<style>
+:root{
+  --cream:#fff7e6; --paper:#fffdf8; --ink:#43382e; --sub:#8a7b6b;
+  --sky:#4aa8e0; --sky-d:#2f86bb; --butter:#ffd35a; --peach:#ffb59a; --edge:#f0dfba;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:36px 16px 72px;background:var(--cream);color:var(--ink);line-height:1.65;
+  font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif}
+.wrap{max-width:680px;margin:0 auto}
+header{text-align:center;margin-bottom:26px}
+h1{margin:0 0 8px;font-size:clamp(1.7rem,6vw,2.3rem);letter-spacing:.04em}
+header p{margin:0;color:var(--sub)}
+.card{background:var(--paper);border:3px solid var(--edge);border-radius:28px;padding:26px;box-shadow:0 8px 0 var(--edge)}
+.field{margin-bottom:24px}
+.field:last-child{margin-bottom:0}
+.t{display:block;margin-bottom:8px;font-weight:700}
+input[type=number],select{width:100%;padding:12px 14px;font:inherit;color:inherit;background:#fff;border:2px solid var(--edge);border-radius:16px}
+input[type=number]:focus,select:focus{outline:3px solid var(--butter);border-color:var(--sky)}
+input[type=range]{width:100%;accent-color:var(--sky)}
+.rv{display:flex;justify-content:space-between;align-items:baseline;color:var(--sub);font-size:.9rem}
+.rv b{color:var(--sky-d);font-size:1.25rem}
+.radios{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border:0;padding:0;margin:0}
+.radios label{position:relative;cursor:pointer}
+.radios input{position:absolute;opacity:0;inset:0}
+.radios span{display:block;padding:12px 6px;text-align:center;background:#fff;border:2px solid var(--edge);border-radius:16px;transition:background .15s,border-color .15s}
+.radios input:checked+span{background:#e6f4fc;border-color:var(--sky);font-weight:700}
+.radios input:focus-visible+span{outline:3px solid var(--butter)}
+.radios.field{margin-bottom:24px}
+.radios.field:last-child{margin-bottom:0}
+.t small{margin-left:8px;color:var(--sub);font-size:.8rem;font-weight:400}
+.chips.radios{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+.chips.v input:checked+span{background:#fff3c4;border-color:var(--butter)}
+.chips.w input:checked+span{background:#ffe9e0;border-color:var(--peach)}
+.radios input:disabled+span{opacity:.4;background:#f6efe0;border-style:dashed}
+.radios label:has(input:disabled){cursor:not-allowed}
+.wishtag{padding:2px 10px;color:#c0502f;font-size:.8rem;background:#ffe9e0;border-radius:999px}
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin:28px 0;padding:18px;
+  font:inherit;font-size:1.2rem;font-weight:700;color:#fff;background:var(--sky);border:0;border-radius:999px;
+  cursor:pointer;box-shadow:0 6px 0 var(--sky-d);transition:transform .12s,box-shadow .12s}
+.go:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--sky-d)}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 var(--sky-d)}
+.go:focus-visible{outline:4px solid var(--butter);outline-offset:3px}
+#fly{position:fixed;inset:0;z-index:20;display:none;opacity:0;background:rgba(255,247,230,.96);transition:opacity .35s}
+#fly.on{opacity:1}
+#fsvg{width:100%;height:100%}
+#fpath{fill:none;stroke:var(--sky);stroke-width:4;stroke-linecap:round;stroke-dasharray:10 14;opacity:.75}
+#fdot{fill:var(--peach)}
+#flab{fill:var(--sub);font-size:15px;font-weight:700}
+.stamp{position:absolute;right:8px;bottom:-30px;width:88px;height:88px;display:grid;place-content:center;text-align:center;
+  color:#d33a3a;font-weight:800;line-height:1.25;border:3px solid #d33a3a;border-radius:50%;
+  box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 5px #d33a3a;background:rgba(255,253,248,.6);
+  mix-blend-mode:multiply;pointer-events:none;opacity:0;transform:rotate(-14deg);
+  animation:bounce .6s cubic-bezier(.3,1.4,.5,1) forwards}
+.stamp small{display:block;font-size:.6rem;letter-spacing:.06em}
+.stamp b{display:block;max-width:58px;margin:0 auto;font-size:.8rem}
+@keyframes bounce{
+  0%{opacity:0;transform:rotate(-14deg) scale(2.6)}
+  55%{opacity:1;transform:rotate(-14deg) scale(.8)}
+  75%{transform:rotate(-14deg) scale(1.15)}
+  100%{opacity:.92;transform:rotate(-14deg) scale(1)}}
+.again{display:block;margin:30px auto 0;padding:10px 26px;font:inherit;color:var(--sky-d);background:#fff;border:2px solid var(--sky);border-radius:999px;cursor:pointer}
+.again:focus-visible{outline:3px solid var(--butter)}
+
+#result{display:none;min-width:0}
+.sum{margin:0 0 22px;text-align:center;color:var(--sub)}
+.sum strong{color:var(--ink)}
+.tl{position:relative;margin:0;padding:0 0 0 52px;list-style:none}
+.tl::before{content:"";position:absolute;left:17px;top:10px;bottom:10px;width:4px;border-radius:2px;
+  background:repeating-linear-gradient(to bottom,var(--peach) 0 10px,transparent 10px 18px)}
+.tl li{position:relative;margin-bottom:46px;opacity:0;animation:pop .5s ease forwards}
+.tl li:last-child{margin-bottom:0}
+.tl li::before{content:"👣";position:absolute;left:-52px;top:14px;width:38px;height:38px;display:grid;place-items:center;
+  font-size:18px;background:var(--paper);border:3px solid var(--sky);border-radius:50%}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.stop{position:relative;background:var(--paper);border:3px solid var(--edge);border-radius:22px;padding:16px 18px;box-shadow:0 5px 0 var(--edge)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+.age{padding:2px 12px;font-weight:700;background:var(--butter);border-radius:999px}
+.stage{color:var(--sub);font-size:.9rem}
+.stop h3{margin:2px 0 6px;font-size:1.25rem}
+.stop p{margin:0}
+.bt{margin-top:10px!important;padding:10px 70px 0 0;border-top:2px dashed var(--edge);color:var(--sub);font-size:.9rem}
+.fit{margin-left:auto;color:var(--sub);font-size:.85rem}
+.note{margin:26px 0 0;text-align:center;color:var(--sub);font-size:.8rem}
+/* 版面：預設單欄置中；寬螢幕在結果出現時展開成「左表單 40%、右時間軸 60%」 */
+.layout{display:grid;grid-template-columns:1fr}
+.side{min-width:0;align-self:start;margin:-6px -10px;padding:6px 10px 16px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.is-active #result{display:block;animation:fadeIn .7s ease .15s both}
+@media (max-width:899px){.is-active #result{margin-top:28px}}
+@media (min-width:900px){
+  .wrap{transition:max-width .9s cubic-bezier(.65,0,.35,1)}
+  .wrap.is-active{max-width:1200px}
+  .layout{grid-template-columns:1fr 0fr;column-gap:0;
+    transition:grid-template-columns .9s cubic-bezier(.65,0,.35,1),column-gap .9s cubic-bezier(.65,0,.35,1)}
+  .is-active .layout{grid-template-columns:2fr 3fr;column-gap:36px}
+  .is-active .side{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:thin}
+  .is-active #result{animation-delay:.45s}
+}
+@media (max-width:480px){.radios{grid-template-columns:1fr}.card{padding:20px}}
+@media (prefers-reduced-motion:reduce){.tl li{animation:none;opacity:1}.stamp{animation:none;opacity:.92}.wrap,.layout{transition:none}.is-active #result{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+ <div class="layout">
+  <div class="side">
+  <header>
+    <h1>蒐集腳印 👣</h1>
+    <p>環遊世界時間軸產生器，告訴 AI 你的現況，它幫你排出這輩子的旅行清單。</p>
+  </header>
+
+  <section class="card" aria-label="旅遊條件">
+    <div class="field">
+      <label class="t" for="age">目前年齡</label>
+      <input type="number" id="age" min="15" max="80" value="25" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label class="t" for="budget">每年旅遊預算</label>
+      <select id="budget">
+        <option value="low">小資窮遊（5 萬內）</option>
+        <option value="mid">寬裕舒適（10-20 萬）</option>
+        <option value="high">財富自由（無上限）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="t" for="stamina">自評體力值</label>
+      <input type="range" id="stamina" min="1" max="10" value="6">
+      <div class="rv"><span>1 極差</span><b id="sv">6 分：普普通通</b><span>10 極佳</span></div>
+    </div>
+    <fieldset class="field radios">
+      <legend class="t">旅遊偏好</legend>
+      <label><input type="radio" name="style" value="adv"><span>🏔️ 極限冒險</span></label>
+      <label><input type="radio" name="style" value="city" checked><span>🏙️ 城市漫遊</span></label>
+      <label><input type="radio" name="style" value="lux"><span>🏝️ 奢華度假</span></label>
+    </fieldset>
+    <fieldset class="field radios chips v" id="visited">
+      <legend class="t">已解鎖區域（去過）<small>可複選，推薦時會優先排除</small></legend>
+    </fieldset>
+    <fieldset class="field radios chips w" id="wish">
+      <legend class="t">夢想清單（最想去）<small>最多 3 個，去過的區域不可選</small><small id="wc">0/3</small></legend>
+    </fieldset>
+  </section>
+
+  <button class="go" id="go" type="button">請 AI 幫我規劃時間軸</button>
+  </div>
+
+
+  <section id="result" aria-live="polite">
+    <p class="sum" id="sum"></p>
+    <ol class="tl" id="tl"></ol>
+    <button class="again" id="again" type="button">重新規劃</button>
+    <p class="note">本頁的「AI」是前端 JavaScript 規則模擬，景點與建議僅供靈感參考。</p>
+  </section>
+ </div>
+
+  <div id="fly" aria-hidden="true">
+    <svg id="fsvg">
+      <path id="fpath"/><circle id="fdot" r="8"/><text id="flab" text-anchor="middle">台灣 起飛</text>
+      <g id="plane"><g fill="var(--sky)" stroke="#fff" stroke-width="2" stroke-linejoin="round">
+        <path d="M8-5L-6-5L-16-22L-9-22Z"/><path d="M8 5L-6 5L-16 22L-9 22Z"/>
+        <path d="M-16-5L-24-14H-19L-10-5Z"/><path d="M-16 5L-24 14H-19L-10 5Z"/>
+        <path d="M-22 0C-22-4-18-6-12-6H14C20-6 24-3 24 0C24 3 20 6 14 6H-12C-18 6-22 4-22 0Z"/>
+      </g></g>
+    </svg>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// 各風格的目的地池：[所需體力下限, 地點, 一句話建議]，由吃體力到最輕鬆排序
+const POOL = {
+  adv: [
+    [8,  "秘魯・印加古道", "四天三夜徒步直抵馬丘比丘，趁體力正好，用雙腳去征服（適合年輕體力好）。", "sa", 0],
+    [6.5,"尼泊爾・安納普納基地營", "海拔 4,130 公尺的雪山日出，每一步喘息都值得。", "as", 0],
+    [6,  "美國・大峽谷與優勝美地", "自駕串起國家公園，景點可長可短，體力好就多走幾步。", "na", 0],
+    [5,  "紐西蘭・米佛步道", "公認最美的步道，分段慢走，風景比速度重要。", "oc", 0],
+    [4,  "北極・斯瓦巴群島", "搭小型探險船看北極熊與冰河，保暖就好，不必拚體能。", "po", 1],
+    [3.5,"冰島・環島自駕", "開車追極光與瀑布，冒險不一定要靠雙腿。", "eu", 1],
+    [2,  "坦尚尼亞・塞倫蓋蒂", "坐在吉普車上看動物大遷徙，安全又震撼。", "af", 0],
+    [0,  "挪威・峽灣觀光列車", "搭火車與渡輪看峽灣，輕鬆擁抱壯闊自然。", "eu", 1]
+  ],
+  city: [
+    [8,  "日本・東京與京都", "清晨古寺、深夜居酒屋，用大量步行把兩座城市吃透。", "as", 0],
+    [6.5,"土耳其・伊斯坦堡", "跨越歐亞的老城與市集，邊走邊吃一整天。", "eu", 0],
+    [6,  "美國・紐約", "地鐵、百老匯與天際線，把這座不夜城慢慢逛。", "na", 1],
+    [5,  "葡萄牙・里斯本與波爾圖", "坡道多但景色好，搭老電車慢慢爬就好。", "eu", 0],
+    [3.5,"義大利・佛羅倫斯", "步行範圍緊湊的文藝復興之城，咖啡與美術館慢慢逛。", "eu", 1],
+    [2,  "奧地利・維也納", "音樂廳與咖啡館之間，只要短距離散步。", "eu", 1],
+    [0,  "新加坡", "冷氣、交通、美食一應俱全，毫無壓力的城市度假。", "as", 0]
+  ],
+  lux: [
+    [8,  "馬爾地夫・水上屋", "白天潛水浮潛，晚上在水上屋看星星。", "as", 1],
+    [6.5,"大溪地・茉莉亞島", "環礁浮潛加獨木舟，悠閒中保留一點活動量。", "oc", 2],
+    [5,  "瑞士・阿爾卑斯景觀列車", "頭等車廂穿過雪山與湖泊，風景自己送上門。", "eu", 1],
+    [4,  "加拿大・洛磯山脈湖畔度假", "住進班夫與路易斯湖畔的木屋，每天只負責看風景。", "na", 1],
+    [3.5,"杜拜・沙漠度假村", "沙漠日落與精品購物，行程交給私人管家。", "as", 1],
+    [2,  "日本・箱根溫泉旅館", "泡湯加懷石料理，讓身心一起被療癒。", "as", 1],
+    [0,  "地中海郵輪度假", "一趟航程玩遍多國，不必拎行李的終極享受。", "eu", 1]
+  ]
+};
+const RHINE = [0, "德國與荷蘭・萊茵河郵輪慢遊", "古堡與葡萄園在兩岸緩緩滑過，不趕路也不累，剛好適合這個階段的你。", "eu", 1];
+// 依「體力 × 預算」觸發的特殊路線
+const SPECIAL = {
+  backpack: [[7,"秘魯・南美背包客","從印加古道一路背包到玻利維亞天空之鏡，青旅加夜巴，一天 40 美金搞定。", "sa", 0],
+             [7,"智利與阿根廷・巴塔哥尼亞","背著帳篷走 W 型步道，世界的盡頭只有風與冰川。", "sa", 0]],
+  polar:    [[3,"南極・極地探險郵輪","企鵝、冰山與極地日出，只有預算不設限才排得進的旅程。", "po", 2],
+             [3,"肯亞與坦尚尼亞・奢華野奢帳篷","私人嚮導帶你追動物大遷徙，夜裡睡進星空下的豪華帳篷。", "af", 2]],
+  cruise:   [RHINE,
+             [0,"希臘與克羅埃西亞・地中海郵輪","一次上船，天天醒來都是新港口，行李只需整理一次。", "eu", 1]],
+  slow:     [[0,"泰國・清邁慢活","租間小公寓住兩週，咖啡、市集與按摩，花費低、節奏慢。", "as", 0],
+             [0,"日本・九州溫泉小旅","搭普通列車泡遍平價溫泉，行程輕鬆，荷包也輕鬆。", "as", 0]],
+  train:    [[0,"日本・九州七星列車","全程管家服務的豪華臥鋪列車，在車廂裡看完整座九州。", "as", 2],
+             [0,"法國與義大利・地中海私人遊艇","包一艘遊艇沿海岸線慢慢漂，想在哪個港口停靠都隨你。", "eu", 2]]
+};
+
+const BUDGET_NAME = { low: "小資窮遊", mid: "寬裕舒適", high: "財富自由" };
+const STYLE_NAME  = { adv: "極限冒險", city: "城市漫遊", lux: "奢華度假" };
+const BUDGET_TIP = {
+  low:  "預算小撇步：搭廉航、住青旅、避開旺季，花小錢也能走很遠。",
+  mid:  "預算小撇步：升級舒適住宿，再加一場在地深度導覽，體驗更到位。",
+  high: "預算小撇步：預算不設限，包下私人導遊與頭等艙吧。"
+};
+const STAGES = ["🌱 近程・啟程", "🧭 中程・深耕", "🌅 遠程・圓夢"];
+
+function staminaLabel(v){ return v <= 3 ? "需要多休息" : v <= 7 ? "普普通通" : "體力怪物"; }
+$("stamina").addEventListener("input", e => { $("sv").textContent = `${e.target.value} 分：${staminaLabel(+e.target.value)}`; });
+$("sv").textContent = `6 分：${staminaLabel(6)}`;
+
+// 區域代碼 → [名稱, 圖示]
+const REGIONS = { as:["亞洲","🏯"], eu:["歐洲","🏰"], na:["北美洲","🗽"], sa:["南美洲","🦙"], oc:["大洋洲","🦘"], af:["非洲","🦁"], po:["極地","🐧"] };
+for (const [id, name] of [["visited", "v"], ["wish", "w"]])
+  $(id).insertAdjacentHTML("beforeend", Object.entries(REGIONS).map(([k, [n, e]]) =>
+    `<label><input type="checkbox" name="${name}" value="${k}"><span>${e} ${n}</span></label>`).join(""));
+
+// 夢想清單最多 3 個，滿了就鎖住其他選項；去過的區域不能再列入夢想
+function syncRegions(){
+  const v = new Set([...document.querySelectorAll("input[name=v]:checked")].map(x => x.value));
+  const ws = [...document.querySelectorAll("input[name=w]")];
+  ws.forEach(x => { if (v.has(x.value)) x.checked = false; });
+  const n = ws.filter(x => x.checked).length;
+  ws.forEach(x => { x.disabled = v.has(x.value) || (n >= 3 && !x.checked); });
+  $("wc").textContent = `${n}/3`;
+}
+document.querySelectorAll("input[name=v],input[name=w]").forEach(x => x.addEventListener("change", syncRegions));
+
+// 資料格式：[體力下限, 地點, 建議, 區域, 最低預算等級(0 小資 / 1 寬裕 / 2 無上限)]
+function plan(age, budget, stamina, style, visited, wish){
+  // 30 歲後每年約損失 0.12 分體力，估算每個階段的預期體力
+  const fit = a => Math.min(10, Math.max(1, stamina - Math.max(0, a - 30) * 0.12));
+  const bl = { low: 0, mid: 1, high: 2 }[budget];
+  const start = age + 1, far = Math.min(age + 25, 88), mid = Math.round((start + far) / 2);
+  const used = new Set(), hit = new Set(), year = new Date().getFullYear();
+  const country = d => d[1].split("・")[0];
+  // 本風格優先，其次其他風格，最後是特殊路線
+  const all = [...POOL[style], ...Object.keys(POOL).filter(k => k !== style).flatMap(k => POOL[k]), ...Object.values(SPECIAL).flat()];
+  // 同一國家不重複；已解鎖區域直接排除（strict = false 時才放行，僅作最後保底）
+  const free = (list, strict = true) => list.find(d => !used.has(country(d)) && !(strict && visited.has(d[3])));
+  return [start, mid, far].map((a, i) => {
+    const f = fit(a), can = d => d[0] <= f && d[4] <= bl;   // 符合該年齡的體力與預算門檻
+    let d = null;
+    // 1. 夢想清單優先：先補還沒排到的夢想區域，並先排體力要求高的（趁年輕）
+    for (const pending of [true, false]) {
+      d = free(all.filter(x => wish.has(x[3]) && can(x) && !(pending && hit.has(x[3]))).sort((p, q) => q[0] - p[0]));
+      if (d) break;
+    }
+    // 2. 體力 × 預算規則
+    if (!d) {
+      if (f > 7 && budget === "low")        d = free(SPECIAL.backpack);   // 體力佳 + 小資：南美背包客
+      else if (f > 7 && budget === "high")  d = free(SPECIAL.polar);      // 體力佳 + 無上限：極地探險
+      else if (f < 5 && budget === "mid")   d = free(SPECIAL.cruise);     // 體力差 + 寬裕：歐洲郵輪
+      else if (f < 5 && budget === "low")   d = free(SPECIAL.slow);       // 體力差 + 小資：低成本慢旅
+      else if (f < 5 && budget === "high")  d = free(SPECIAL.train);      // 體力差 + 無上限：豪華列車與遊艇
+      else if (a >= 50 && budget === "mid" && f < 7) d = free(SPECIAL.cruise);  // 50 歲後 + 寬裕：郵輪慢遊
+      else if (i === 0 && style === "adv" && stamina > 7) d = free([POOL.adv[0]]); // 極限冒險 + 體力 > 7：印加古道
+    }
+    // 3. 依旅遊偏好挑選，找不到再放寬；全區域都去過時才解除排除
+    if (!d) d = free(POOL[style].filter(can)) || free(POOL[style].filter(x => x[0] <= f)) ||
+                free(all.filter(x => x[0] <= f)) || free(all) || free(all, false);
+    used.add(country(d)); hit.add(d[3]);
+    return { age: a, year: year + a - age, stage: STAGES[i], place: d[1], country: country(d), tip: d[2],
+             bt: BUDGET_TIP[budget], fit: f, region: d[3], wish: wish.has(d[3]) };
+  });
+}
+
+function render(){
+  let age = parseInt($("age").value, 10);
+  age = isNaN(age) ? 25 : Math.min(80, Math.max(15, age));
+  $("age").value = age;
+  const budget = $("budget").value, stamina = +$("stamina").value;
+  const style = document.querySelector('input[name="style"]:checked').value;
+  const val = n => [...document.querySelectorAll(`input[name=${n}]:checked`)].map(x => x.value);
+  const visited = val("v"), wish = val("w");
+  const stops = plan(age, budget, stamina, style, new Set(visited), new Set(wish));
+  const names = a => a.map(k => REGIONS[k][0]).join("、");
+  const missed = wish.filter(k => !stops.some(s => s.region === k));
+  const extra = (visited.length ? `<br>已解鎖：${names(visited)}（已優先排除）` : "")
+    + (wish.length ? `<br>夢想清單：${names(wish)}（優先排入）` : "")
+    + (missed.length ? `<br>目前的體力或預算還排不進「${names(missed)}」，之後再挑戰吧。` : "")
+    + (visited.length === 7 ? "<br>七大區域都解鎖了，改為重溫經典路線。" : "");
+
+  $("sum").innerHTML = `${age} 歲出發，預算「${BUDGET_NAME[budget]}」，體力 ${stamina} 分，偏好<strong>${STYLE_NAME[style]}</strong>。<br>AI 為你排出 ${stops.length} 站：${extra}`;
+  // 寬螢幕要等排版滑動完才開始浮現節點；節點由上往下逐一浮現，彈出後再蓋上入境章
+  const base = wide.matches ? 1 : 0.3;
+  $("tl").innerHTML = stops.map((s, i) => `
+    <li style="animation-delay:${base + i * 0.8}s">
+      <div class="stop">
+        <div class="meta"><span class="age">預計 ${s.age} 歲</span><span class="stage">${s.stage}</span><span class="stage">${REGIONS[s.region][1]} ${REGIONS[s.region][0]}</span>${s.wish ? '<span class="wishtag">⭐ 夢想清單</span>' : ""}<span class="fit">預估體力 ${s.fit.toFixed(1)} / 10</span></div>
+        <h3>${s.place}</h3>
+        <p>${s.tip}</p>
+        <p class="bt">${s.bt}</p>
+        <div class="stamp" style="animation-delay:${base + i * 0.8 + 0.45}s"><small>入境 ENTRY</small><b>${s.country}</b><small>${s.year}</small></div>
+      </div>
+    </li>`).join("");
+}
+
+// 飛機沿虛線軌跡從台灣飛向畫面中央，約 2 秒
+function fly(done){
+  const W = innerWidth, H = innerHeight, ov = $("fly"), p = $("fpath"), pl = $("plane");
+  const x0 = W * .12, y0 = H * .14;
+  $("fsvg").setAttribute("viewBox", `0 0 ${W} ${H}`);
+  p.setAttribute("d", `M${x0} ${y0} Q${W * .55} ${H * .02} ${W / 2} ${H / 2}`);
+  $("fdot").setAttribute("cx", x0); $("fdot").setAttribute("cy", y0);
+  $("flab").setAttribute("x", x0); $("flab").setAttribute("y", y0 + 28);
+  ov.style.display = "block";
+  requestAnimationFrame(() => ov.classList.add("on"));
+  const L = p.getTotalLength(), T = matchMedia("(prefers-reduced-motion:reduce)").matches ? 600 : 2000, t0 = performance.now();
+  (function step(now){
+    const k = Math.min(1, (now - t0) / T), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, s = e * L;
+    const c = p.getPointAtLength(s), a = p.getPointAtLength(Math.min(L, s + 2)), b = p.getPointAtLength(Math.max(0, s - 2));
+    pl.setAttribute("transform", `translate(${c.x} ${c.y}) rotate(${Math.atan2(a.y - b.y, a.x - b.x) * 180 / Math.PI}) scale(1.3)`);
+    if (k < 1) return requestAnimationFrame(step);
+    done();
+    ov.classList.remove("on");
+    setTimeout(() => { ov.style.display = "none"; }, 350);
+  })(t0);
+}
+
+const wide = matchMedia("(min-width:900px)");
+$("go").addEventListener("click", () => {
+  $("go").style.display = "none";
+  fly(() => {
+    render();
+    // 飛機動畫結束：加上 .is-active，寬螢幕由置中滑成左右雙欄，窄螢幕則直接在下方顯示結果
+    $("wrap").classList.add("is-active");
+    // 寬螢幕兩欄頂端對齊，回到頁面最上方；窄螢幕捲到下方的結果
+    if (wide.matches) window.scrollTo({ top: 0, behavior: "smooth" });
+    else $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+$("again").addEventListener("click", () => {
+  $("wrap").classList.remove("is-active");
+  $("go").style.display = "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+</script>
+</body>
+</html>
